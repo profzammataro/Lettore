@@ -81,31 +81,31 @@
             background: #6d28d9;
         }
 
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:active {
+            background: #b91c1c;
+        }
+
         .current-track {
             padding: 1.5rem;
             background: rgba(0, 0, 0, 0.2);
             text-align: center;
         }
 
-        .track-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1rem;
-            background: linear-gradient(to bottom right, #ec4899, #8b5cf6);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-        }
+        
 
         .track-name {
-            font-size: 1.25rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        font-size: 2.5rem;  /* Caratteri molto grandi */
+        font-weight: bold;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #fbbf24;  /* Giallo/ambra brillante che risalta bene sul viola */
         }
 
         .progress-container {
@@ -227,6 +227,12 @@
             margin-bottom: 0.75rem;
         }
 
+        .playlist-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
         .empty-playlist {
             text-align: center;
             padding: 2rem;
@@ -269,6 +275,7 @@
 
         .track-title {
             font-weight: 600;
+            font-size: 1.5rem;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -302,14 +309,11 @@
         <button class="btn btn-primary" onclick="openFileDialog()">
             &#128193; Carica Musica
         </button>
-        <button class="btn btn-secondary" onclick="toggleSort()">
-            &#128202; <span id="sortLabel">Recente</span>
-        </button>
         <input type="file" id="fileInput" accept="audio/*" multiple>
     </div>
 
     <div class="current-track">
-        <div class="track-icon">&#127925;</div>
+
         <div class="track-name" id="currentTrackName">Nessun brano selezionato</div>
         <div class="progress-container">
             <input type="range" class="progress-bar" id="progressBar" min="0" max="100" value="0">
@@ -330,6 +334,14 @@
 
     <div class="playlist-section">
         <div class="playlist-header">Playlist (<span id="playlistCount">0</span>)</div>
+        <div class="playlist-controls">
+            <button class="btn btn-secondary" onclick="toggleSort()">
+                &#128202; <span id="sortLabel">Recente</span>
+            </button>
+            <button class="btn btn-danger" onclick="clearPlaylist()">
+                &#128465;&#65039; Cancella Tutto
+            </button>
+        </div>
         <div id="playlistContainer">
             <div class="empty-playlist">
                 <div class="empty-icon">&#127925;</div>
@@ -400,6 +412,30 @@
             sortBy = sortBy === 'recent' ? 'name' : 'recent';
             document.getElementById('sortLabel').textContent = sortBy === 'recent' ? 'Recente' : 'Nome';
             renderPlaylist();
+        }
+
+        function clearPlaylist() {
+            if (playlist.length === 0) return;
+            
+            if (confirm('Sei sicuro di voler cancellare tutta la playlist?')) {
+                // Revoke all object URLs to free memory
+                playlist.forEach(function(track) {
+                    URL.revokeObjectURL(track.url);
+                });
+                
+                // Clear playlist
+                playlist = [];
+                currentTrackIndex = null;
+                
+                // Stop and reset audio
+                stopMusic();
+                audio.src = '';
+                document.getElementById('currentTrackName').textContent = 'Nessun brano selezionato';
+                
+                // Re-render playlist
+                renderPlaylist();
+                updateControlButtons();
+            }
         }
 
         function getSortedPlaylist() {
