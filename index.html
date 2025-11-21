@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
     <title>Music Player</title>
     <style>
         * {
@@ -12,6 +13,9 @@
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         body {
@@ -19,15 +23,18 @@
             background: linear-gradient(to bottom right, #581c87, #1e3a8a, #312e81);
             color: white;
             height: 100vh;
+            height: -webkit-fill-available;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             position: fixed;
             width: 100%;
+            top: 0;
+            left: 0;
         }
 
         .header {
-            padding: 1rem;
+            padding: max(1rem, env(safe-area-inset-top) + 0.5rem) 1rem 1rem 1rem;
             background: rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -59,7 +66,13 @@
             gap: 0.5rem;
             font-size: 0.9rem;
             -webkit-appearance: none;
+            appearance: none;
             touch-action: manipulation;
+            transition: transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
         }
 
         .btn-primary {
@@ -96,29 +109,29 @@
             text-align: center;
         }
 
-        
-
         .track-name {
-        font-size: 2.5rem;  /* Caratteri molto grandi */
-        font-weight: bold;
-        margin-bottom: 1rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        color: #ef4444;  /* Giallo/ambra brillante che risalta bene sul viola */
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #ef4444;
+            min-height: 2.5rem;
         }
 
         .progress-container {
             margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
         }
 
         .progress-bar {
             width: 100%;
-            height: 8px;
+            height: 12px;
             -webkit-appearance: none;
             appearance: none;
             background: #374151;
-            border-radius: 4px;
+            border-radius: 6px;
             outline: none;
             cursor: pointer;
         }
@@ -126,20 +139,22 @@
         .progress-bar::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 16px;
-            height: 16px;
+            width: 24px;
+            height: 24px;
             background: #8b5cf6;
             border-radius: 50%;
             cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         .progress-bar::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
+            width: 24px;
+            height: 24px;
             background: #8b5cf6;
             border-radius: 50%;
             cursor: pointer;
             border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         .time-display {
@@ -147,15 +162,16 @@
             justify-content: space-between;
             font-size: 0.875rem;
             color: #d1d5db;
+            padding: 0 0.25rem;
         }
 
         .player-controls {
-            padding: 1rem;
+            padding: 1.5rem 1rem;
             background: rgba(0, 0, 0, 0.2);
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 1rem;
+            gap: 1.25rem;
         }
 
         .control-btn {
@@ -169,13 +185,21 @@
             justify-content: center;
             font-size: 1.5rem;
             -webkit-appearance: none;
+            appearance: none;
             touch-action: manipulation;
+            transition: transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .control-btn:active:not(:disabled) {
+            transform: scale(0.9);
         }
 
         .control-btn.play {
-            width: 70px;
-            height: 70px;
+            width: 75px;
+            height: 75px;
             background: #16a34a;
+            font-size: 2rem;
         }
 
         .control-btn.play:active {
@@ -183,9 +207,10 @@
         }
 
         .control-btn.pause {
-            width: 70px;
-            height: 70px;
+            width: 75px;
+            height: 75px;
             background: #ca8a04;
+            font-size: 2rem;
         }
 
         .control-btn.pause:active {
@@ -219,6 +244,7 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             padding: 1rem;
+            padding-bottom: max(1rem, env(safe-area-inset-bottom));
         }
 
         .playlist-header {
@@ -253,6 +279,7 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            transition: background 0.15s;
         }
 
         .track-item.active {
@@ -271,24 +298,31 @@
             flex: 1;
             cursor: pointer;
             overflow: hidden;
+            min-width: 0;
         }
 
         .track-title {
             font-weight: 600;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
         .delete-btn {
-            padding: 0.5rem;
+            padding: 0.75rem;
             background: transparent;
             border: none;
             color: white;
             cursor: pointer;
             border-radius: 0.5rem;
             touch-action: manipulation;
+            font-size: 1.5rem;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .delete-btn:active {
@@ -298,22 +332,27 @@
         input[type="file"] {
             display: none;
         }
+
+        @supports (padding: max(0px)) {
+            body {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>&#127925; Music Player</h1>
+        <h1>🎵 Music Player</h1>
     </div>
 
     <div class="controls-section">
         <button class="btn btn-primary" onclick="openFileDialog()">
-            &#128193; Carica Musica
+            📁 Carica Musica
         </button>
         <input type="file" id="fileInput" accept="audio/*" multiple>
     </div>
 
     <div class="current-track">
-
         <div class="track-name" id="currentTrackName">Nessun brano selezionato</div>
         <div class="progress-container">
             <input type="range" class="progress-bar" id="progressBar" min="0" max="100" value="0">
@@ -325,26 +364,26 @@
     </div>
 
     <div class="player-controls">
-        <button class="control-btn skip" onclick="skipBack()" id="skipBackBtn" disabled>&#9198;&#65039;</button>
-        <button class="control-btn play" onclick="playMusic()" id="playBtn">&#9654;&#65039;</button>
-        <button class="control-btn pause" onclick="pauseMusic()" id="pauseBtn" style="display: none;">&#9208;&#65039;</button>
-        <button class="control-btn stop" onclick="stopMusic()" id="stopBtn" disabled>&#9209;&#65039;</button>
-        <button class="control-btn skip" onclick="skipForward()" id="skipForwardBtn" disabled>&#9197;&#65039;</button>
+        <button class="control-btn skip" onclick="skipBack()" id="skipBackBtn" disabled>⏮️</button>
+        <button class="control-btn play" onclick="playMusic()" id="playBtn">▶️</button>
+        <button class="control-btn pause" onclick="pauseMusic()" id="pauseBtn" style="display: none;">⏸️</button>
+        <button class="control-btn stop" onclick="stopMusic()" id="stopBtn" disabled>⏹️</button>
+        <button class="control-btn skip" onclick="skipForward()" id="skipForwardBtn" disabled>⏭️</button>
     </div>
 
     <div class="playlist-section">
         <div class="playlist-header">Playlist (<span id="playlistCount">0</span>)</div>
         <div class="playlist-controls">
             <button class="btn btn-secondary" onclick="toggleSort()">
-                &#128202; <span id="sortLabel">Recente</span>
+                📊 <span id="sortLabel">Recente</span>
             </button>
             <button class="btn btn-danger" onclick="clearPlaylist()">
-                &#128465;&#65039; Cancella Tutto
+                🗑️ Cancella Tutto
             </button>
         </div>
         <div id="playlistContainer">
             <div class="empty-playlist">
-                <div class="empty-icon">&#127925;</div>
+                <div class="empty-icon">🎵</div>
                 <p>Carica della musica per iniziare</p>
             </div>
         </div>
@@ -358,11 +397,37 @@
         var sortBy = 'recent';
         var audio = document.getElementById('audioPlayer');
         var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        var audioInitialized = false;
 
-        // iOS audio initialization
-        if (isIOS) {
-            audio.load();
+        // iOS audio context unlock
+        function unlockAudio() {
+            if (!audioInitialized && isIOS) {
+                audio.load();
+                var playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(function() {
+                        audio.pause();
+                        audio.currentTime = 0;
+                        audioInitialized = true;
+                    }).catch(function() {
+                        // Autoplay blocked, will be unlocked on user interaction
+                    });
+                }
+            }
         }
+
+        // Unlock audio on first touch
+        document.addEventListener('touchstart', unlockAudio, { once: true });
+
+        // Fix for iOS viewport height
+        function setViewportHeight() {
+            var vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', vh + 'px');
+        }
+        
+        setViewportHeight();
+        window.addEventListener('resize', setViewportHeight);
+        window.addEventListener('orientationchange', setViewportHeight);
 
         function openFileDialog() {
             document.getElementById('fileInput').click();
@@ -376,15 +441,12 @@
             seekTrack(event);
         });
 
-        // iOS-specific: prevent default touch behaviors
-        document.addEventListener('touchmove', function(e) {
-            if (e.target.type !== 'range') {
-                // Allow scrolling in playlist only
-                var playlistSection = document.querySelector('.playlist-section');
-                if (!playlistSection.contains(e.target)) {
-                    e.preventDefault();
-                }
+        // Prevent body scroll on iOS
+        document.body.addEventListener('touchmove', function(e) {
+            if (e.target.closest('.playlist-section')) {
+                return;
             }
+            e.preventDefault();
         }, { passive: false });
 
         function handleFileSelect(event) {
@@ -392,6 +454,11 @@
             var musicFiles = files.filter(function(file) {
                 return file.type.startsWith('audio/');
             });
+            
+            if (musicFiles.length === 0) {
+                alert('Nessun file audio selezionato');
+                return;
+            }
             
             musicFiles.forEach(function(file, index) {
                 var track = {
@@ -405,6 +472,7 @@
             });
             
             renderPlaylist();
+            updateControlButtons();
             event.target.value = '';
         }
 
@@ -418,21 +486,17 @@
             if (playlist.length === 0) return;
             
             if (confirm('Sei sicuro di voler cancellare tutta la playlist?')) {
-                // Revoke all object URLs to free memory
                 playlist.forEach(function(track) {
                     URL.revokeObjectURL(track.url);
                 });
                 
-                // Clear playlist
                 playlist = [];
                 currentTrackIndex = null;
                 
-                // Stop and reset audio
                 stopMusic();
                 audio.src = '';
                 document.getElementById('currentTrackName').textContent = 'Nessun brano selezionato';
                 
-                // Re-render playlist
                 renderPlaylist();
                 updateControlButtons();
             }
@@ -455,7 +519,7 @@
             document.getElementById('playlistCount').textContent = sorted.length;
             
             if (sorted.length === 0) {
-                container.innerHTML = '<div class="empty-playlist"><div class="empty-icon">&#127925;</div><p>Carica della musica per iniziare</p></div>';
+                container.innerHTML = '<div class="empty-playlist"><div class="empty-icon">🎵</div><p>Carica della musica per iniziare</p></div>';
                 return;
             }
             
@@ -465,12 +529,18 @@
                 var activeClass = currentTrackIndex === i ? 'active' : '';
                 html += '<div class="track-item ' + activeClass + '">';
                 html += '<div class="track-info" onclick="playTrack(' + i + ')">';
-                html += '<div class="track-title">' + track.name + '</div>';
+                html += '<div class="track-title">' + escapeHtml(track.name) + '</div>';
                 html += '</div>';
-                html += '<button class="delete-btn" onclick="removeTrack(' + track.id + ')">&#128465;&#65039;</button>';
+                html += '<button class="delete-btn" onclick="removeTrack(' + track.id + ')">🗑️</button>';
                 html += '</div>';
             }
             container.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         function playTrack(index) {
@@ -479,11 +549,9 @@
                 currentTrackIndex = index;
                 var track = sorted[index];
                 
-                // iOS-specific: set source and load
                 audio.src = track.url;
                 audio.load();
                 
-                // Use promise-based play for better iOS compatibility
                 var playPromise = audio.play();
                 
                 if (playPromise !== undefined) {
@@ -493,8 +561,7 @@
                         renderPlaylist();
                         updateControlButtons();
                     }).catch(function(error) {
-                        console.log('Playback prevented:', error);
-                        // Still update UI even if autoplay is blocked
+                        console.log('Riproduzione impedita:', error);
                         document.getElementById('currentTrackName').textContent = track.name;
                         updatePlayPauseButtons(false);
                         renderPlaylist();
@@ -514,7 +581,7 @@
                     playPromise.then(function() {
                         updatePlayPauseButtons(true);
                     }).catch(function(error) {
-                        console.log('Play prevented:', error);
+                        console.log('Riproduzione impedita:', error);
                     });
                 }
             }
@@ -530,6 +597,7 @@
             audio.currentTime = 0;
             updatePlayPauseButtons(false);
             document.getElementById('currentTime').textContent = '0:00';
+            document.getElementById('progressBar').value = 0;
         }
 
         function skipBack() {
@@ -559,6 +627,7 @@
             
             if (currentTrack && currentTrack.id === id) {
                 stopMusic();
+                audio.src = '';
                 currentTrackIndex = null;
                 document.getElementById('currentTrackName').textContent = 'Nessun brano selezionato';
             }
@@ -569,7 +638,9 @@
 
         function seekTrack(event) {
             var time = parseFloat(event.target.value);
-            audio.currentTime = time;
+            if (!isNaN(time) && isFinite(time)) {
+                audio.currentTime = time;
+            }
         }
 
         function updatePlayPauseButtons(isPlaying) {
@@ -604,13 +675,14 @@
 
         audio.addEventListener('ended', function() {
             var sorted = getSortedPlaylist();
-            if (currentTrackIndex < sorted.length - 1) {
+            if (currentTrackIndex !== null && currentTrackIndex < sorted.length - 1) {
                 skipForward();
             } else {
                 stopMusic();
                 currentTrackIndex = null;
                 document.getElementById('currentTrackName').textContent = 'Nessun brano selezionato';
                 renderPlaylist();
+                updateControlButtons();
             }
         });
 
@@ -622,13 +694,18 @@
             updatePlayPauseButtons(false);
         });
 
-        // iOS-specific: handle audio interruptions (phone calls, etc.)
-        audio.addEventListener('stalled', function() {
-            console.log('Audio stalled');
+        audio.addEventListener('error', function(e) {
+            console.log('Errore audio:', e);
+            alert('Errore durante la riproduzione del file audio');
         });
 
-        audio.addEventListener('error', function(e) {
-            console.log('Audio error:', e);
+        // Prevent accidental page unload
+        window.addEventListener('beforeunload', function(e) {
+            if (playlist.length > 0) {
+                playlist.forEach(function(track) {
+                    URL.revokeObjectURL(track.url);
+                });
+            }
         });
     </script>
 </body>
